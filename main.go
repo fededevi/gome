@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 
 	"gome/system/input"
@@ -19,6 +20,11 @@ type Game struct {
 func (g *Game) Update() error {
 	cmd := input.GetMenuCommand()
 	g.menu.HandleCommand(cmd)
+
+	if game.QuitRequested {
+		return errors.New("quit requested")
+	}
+
 	return nil
 }
 

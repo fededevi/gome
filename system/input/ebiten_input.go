@@ -6,18 +6,30 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+var prevKeys = map[ebiten.Key]bool{}
+
+// GetMenuCommand returns a command only once per key press
 func GetMenuCommand() menu.Command {
-	if ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
-		return menu.CmdUp
+	keys := []struct {
+		key     ebiten.Key
+		command menu.Command
+	}{
+		{ebiten.KeyArrowUp, menu.CmdUp},
+		{ebiten.KeyArrowDown, menu.CmdDown},
+		{ebiten.KeyArrowLeft, menu.CmdLeft},
+		{ebiten.KeyArrowRight, menu.CmdRight},
+		{ebiten.KeyEnter, menu.CmdSelect},
+		{ebiten.KeyEscape, menu.CmdBack},
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyArrowDown) {
-		return menu.CmdDown
+
+	for _, k := range keys {
+		pressed := ebiten.IsKeyPressed(k.key)
+		justPressed := pressed && !prevKeys[k.key] // edge detection
+		prevKeys[k.key] = pressed
+		if justPressed {
+			return k.command
+		}
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyEnter) {
-		return menu.CmdSelect
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
-		return menu.CmdBack
-	}
+
 	return menu.CmdNone
 }

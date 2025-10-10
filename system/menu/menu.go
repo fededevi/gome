@@ -1,56 +1,56 @@
 package menu
 
-type Item struct {
-	Label    string
-	Action   func()
-	Children []*Item
-	Parent   *Item
-}
-
+// Menu holds the current menu and selection
 type Menu struct {
-	Current  *Item
+	Current  MenuItem
 	Selected int
 }
 
-// New creates a new menu from a root node.
-func New(root *Item) *Menu {
+// New creates a new Menu
+func New(root MenuItem) *Menu {
 	return &Menu{Current: root}
 }
 
-// HandleCommand updates the menu state based on an abstract command.
+// HandleCommand updates the menu according to input
 func (m *Menu) HandleCommand(cmd Command) {
+	if m.Current == nil {
+		return
+	}
+
+	children := m.Current.Children()
+	if len(children) == 0 {
+		return
+	}
+
+	selectedItem := children[m.Selected]
+
 	switch cmd {
 	case CmdUp:
 		if m.Selected > 0 {
 			m.Selected--
 		}
 	case CmdDown:
-		if m.Selected < len(m.Current.Children)-1 {
+		if m.Selected < len(children)-1 {
 			m.Selected++
 		}
-	case CmdSelect:
-		if len(m.Current.Children) == 0 {
-			return
-		}
-		selected := m.Current.Children[m.Selected]
-		if len(selected.Children) > 0 {
-			m.Current = selected
+	case CmdLeft, CmdRight, CmdSelect:
+		selectedItem.Update(cmd)
+		if len(selectedItem.Children()) > 0 && cmd == CmdSelect {
+			m.Current = selectedItem
 			m.Selected = 0
-		} else if selected.Action != nil {
-			selected.Action()
 		}
 	case CmdBack:
-		if m.Current.Parent != nil {
-			m.Current = m.Current.Parent
+		if m.Current.Parent() != nil {
+			m.Current = m.Current.Parent()
 			m.Selected = 0
 		}
 	}
 }
 
-// Utility to link parent pointers recursively.
-func LinkParents(root *Item) {
-	for _, child := range root.Children {
-		child.Parent = root
+// LinkParents recursively sets parent pointers
+func LinkParents(root MenuItem) {
+	for _, child := range root.Children() {
+		child.SetParent(root)
 		LinkParents(child)
 	}
 }

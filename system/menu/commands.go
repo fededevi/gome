@@ -7,6 +7,8 @@ const (
 	CmdNone Command = iota
 	CmdUp
 	CmdDown
+	CmdLeft
+	CmdRight
 	CmdSelect
 	CmdBack
 )

@@ -20,9 +20,19 @@ func DrawMenu(screen *ebiten.Image, m *menu.Menu) {
 
 		display := item.Label()
 
-		// If item is a slider, show value
+		// Handle sliders
 		if s, ok := item.(*menu.Slider); ok {
 			display = fmt.Sprintf("%s: %d", s.Label(), s.Value())
+		}
+
+		// Handle enum items
+		if e, ok := item.(*menu.EnumItem); ok {
+			display = fmt.Sprintf("%s: %s", e.Label(), e.Value())
+		}
+
+		// Handle submenus (optional marker)
+		if _, ok := item.(*menu.Submenu); ok {
+			display += " ▶"
 		}
 
 		ebitenutil.DebugPrintAt(screen, prefix+display, 100, y)

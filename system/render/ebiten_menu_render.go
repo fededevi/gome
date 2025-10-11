@@ -2,21 +2,19 @@ package render
 
 import (
 	"fmt"
+	"image/color"
 
 	"gome/system/menu"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/text"
+	"golang.org/x/image/font/basicfont"
 )
 
 func DrawMenu(screen *ebiten.Image, m *menu.Menu) {
 	children := m.Current.Get().Children()
 	for i, item := range children {
 		y := 100 + i*20
-		prefix := "  "
-		if i == m.Selected {
-			prefix = "> "
-		}
 
 		display := item.Label()
 
@@ -30,11 +28,19 @@ func DrawMenu(screen *ebiten.Image, m *menu.Menu) {
 			display = fmt.Sprintf("%s: %s", e.Label(), e.Value())
 		}
 
-		// Handle submenus (optional marker)
+		// Handle submenus
 		if _, ok := item.(*menu.Submenu); ok {
 			display += " >"
 		}
 
-		ebitenutil.DebugPrintAt(screen, prefix+display, 100, y)
+		// Choose color based on selection
+		var col color.Color
+		if i == m.Selected.Get() {
+			col = color.RGBA{255, 200, 0, 255} // gold/yellow for selected
+		} else {
+			col = color.White
+		}
+
+		text.Draw(screen, display, basicfont.Face7x13, 100, y, col)
 	}
 }

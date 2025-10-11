@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
 
 	"gome/game"
@@ -15,59 +14,61 @@ import (
 )
 
 type Game struct {
-	menu     *menu.Menu
 	audioSys *audio.AudioSystem
+	menu     *menu.Menu
+	fsm      *game.GomeFSM
 }
 
 func (g *Game) Update() error {
-
+	// Update menu input
 	cmd := input.GetMenuCommand()
 	g.menu.HandleCommand(cmd)
+
+	// Automatically transition from Initial -> OptionsMenu
+	if g.fsm.FSM.Current() == g.fsm.Initial {
+		g.fsm.FSM.TryTransition()
+	}
 
 	if game.QuitRequested {
 		return errors.New("quit requested")
 	}
-
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	render.DrawMenu(screen, g.menu)
+	// Draw menu only if OptionsMenu state is active
+	if g.fsm.FSM.Current() == g.fsm.OptionsMenu {
+		render.DrawMenu(screen, g.menu)
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return 320, 240
+	return 640, 480
 }
 
 func main() {
-	// Create audio system
 	audioSys := audio.NewAudioSystem()
 	game.InitializeSounds(audioSys)
 
+	// Create menu
 	menuTree := game.CreateGameMenu(audioSys)
 	menu.LinkParents(menuTree)
+	gameMenu := menu.New(menuTree)
 
-	// Play background music
-	_ = audioSys.Play(game.BgmSound)
+	// Create FSM
+	fsm := game.NewGomeFSM()
 
 	g := &Game{
-		menu:     menu.New(menuTree),
+		menu:     gameMenu,
 		audioSys: audioSys,
+		fsm:      fsm,
 	}
 
-	g.menu.Current.OnChange.Do(func(_ menu.MenuItem) {
-		fmt.Println("Menu changed to:")
-		_ = audioSys.Play(game.ClickSound)
-	})
-
-	
-	g.menu.Current.OnChange.Do(func(_ menu.MenuItem) {
-		fmt.Println("Menu changed to:")
-		_ = audioSys.Play(game.ClickSound)
-	})
+	// Start background music
+	_ = audioSys.Play(game.BgmSound)
 
 	ebiten.SetWindowSize(640, 480)
-	ebiten.SetWindowTitle("Gome Menu System")
+	ebiten.SetWindowTitle("Gome FSM Menu System")
 
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)

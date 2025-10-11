@@ -1,5 +1,7 @@
 package events
 
+import "fmt"
+
 type Property[T comparable] struct {
 	value    T
 	OnChange Event[T]
@@ -13,6 +15,7 @@ func NewProperty[T comparable](initial T) *Property[T] {
 // Set assigns a new value and triggers OnChange if changed
 func (p *Property[T]) Set(newValue T) {
 	if p.value != newValue {
+		fmt.Println("Property changed")
 		p.value = newValue
 		p.OnChange.Emit(newValue)
 	}

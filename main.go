@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"gome/game"
@@ -27,7 +28,7 @@ func (g *Game) Update() error {
 		return errors.New("quit requested")
 	}
 
-	return nil 
+	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -55,6 +56,13 @@ func main() {
 	}
 
 	g.menu.Current.OnChange.Do(func(_ menu.MenuItem) {
+		fmt.Println("Menu changed to:")
+		_ = audioSys.Play(game.ClickSound)
+	})
+
+	
+	g.menu.Current.OnChange.Do(func(_ menu.MenuItem) {
+		fmt.Println("Menu changed to:")
 		_ = audioSys.Play(game.ClickSound)
 	})
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"gome/game"
@@ -9,6 +10,7 @@ import (
 	"gome/system/input"
 	"gome/system/menu"
 	"gome/system/render"
+	sm "gome/system/statemachine"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -57,6 +59,14 @@ func main() {
 
 	// Create FSM
 	fsm := game.NewGomeFSM()
+	fsm.FSM.OnStateChange.Do(func(s *sm.State) {
+		fmt.Println("Entered Options Menu")
+		_ = audioSys.Play(game.ClickSound)
+	})
+
+	fsm.OptionsToGame.OnActivate.Do(func(t *sm.Transition) {
+		fmt.Println("Starting game!")
+	})
 
 	g := &Game{
 		menu:     gameMenu,

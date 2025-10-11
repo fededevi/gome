@@ -4,15 +4,18 @@ import (
 	"gome/system/events"
 )
 
-// Menu holds the current menu and selection
+// Menu holds the current menu and selected index as reactive properties
 type Menu struct {
 	Current  *events.Property[MenuItem]
-	Selected int
+	Selected *events.Property[int]
 }
 
 // New creates a new Menu
 func New(root MenuItem) *Menu {
-	return &Menu{Current: events.NewProperty(root)}
+	return &Menu{
+		Current:  events.NewProperty(root),
+		Selected: events.NewProperty(0),
+	}
 }
 
 // HandleCommand updates the menu according to input
@@ -26,27 +29,28 @@ func (m *Menu) HandleCommand(cmd Command) {
 		return
 	}
 
-	selectedItem := children[m.Selected]
+	selected := m.Selected.Get()
 
 	switch cmd {
 	case CmdUp:
-		if m.Selected > 0 {
-			m.Selected--
+		if selected > 0 {
+			m.Selected.Set(selected - 1)
 		}
 	case CmdDown:
-		if m.Selected < len(children)-1 {
-			m.Selected++
+		if selected < len(children)-1 {
+			m.Selected.Set(selected + 1)
 		}
 	case CmdLeft, CmdRight, CmdSelect:
+		selectedItem := children[selected]
 		selectedItem.Update(cmd)
 		if len(selectedItem.Children()) > 0 && cmd == CmdSelect {
 			m.Current.Set(selectedItem)
-			m.Selected = 0
+			m.Selected.Set(0)
 		}
 	case CmdBack:
-		if m.Current.Get().Parent() != nil {
-			m.Current.Set(m.Current.Get().Parent())
-			m.Selected = 0
+		if parent := m.Current.Get().Parent(); parent != nil {
+			m.Current.Set(parent)
+			m.Selected.Set(0)
 		}
 	}
 }

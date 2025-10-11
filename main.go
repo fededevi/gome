@@ -4,20 +4,22 @@ import (
 	"errors"
 	"log"
 
+	"gome/game"
+	"gome/system/audio"
 	"gome/system/input"
 	"gome/system/menu"
 	"gome/system/render"
-
-	"gome/game"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Game struct {
-	menu *menu.Menu
+	menu     *menu.Menu
+	audioSys *audio.AudioSystem
 }
 
 func (g *Game) Update() error {
+
 	cmd := input.GetMenuCommand()
 	g.menu.HandleCommand(cmd)
 
@@ -25,7 +27,7 @@ func (g *Game) Update() error {
 		return errors.New("quit requested")
 	}
 
-	return nil
+	return nil 
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -37,8 +39,24 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func main() {
-	menu.LinkParents(game.GameMenuTree)
-	g := &Game{menu: menu.New(game.GameMenuTree)}
+	// Create audio system
+	audioSys := audio.NewAudioSystem()
+	game.InitializeSounds(audioSys)
+
+	menuTree := game.CreateGameMenu(audioSys)
+	menu.LinkParents(menuTree)
+
+	// Play background music
+	_ = audioSys.Play(game.BgmSound)
+
+	g := &Game{
+		menu:     menu.New(menuTree),
+		audioSys: audioSys,
+	}
+
+	g.menu.Current.OnChange.Do(func(_ menu.MenuItem) {
+		_ = audioSys.Play(game.ClickSound)
+	})
 
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("Gome Menu System")

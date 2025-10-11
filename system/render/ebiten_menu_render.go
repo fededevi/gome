@@ -10,7 +10,7 @@ import (
 )
 
 func DrawMenu(screen *ebiten.Image, m *menu.Menu) {
-	children := m.Current.Children()
+	children := m.Current.Get().Children()
 	for i, item := range children {
 		y := 100 + i*20
 		prefix := "  "
@@ -32,7 +32,7 @@ func DrawMenu(screen *ebiten.Image, m *menu.Menu) {
 
 		// Handle submenus (optional marker)
 		if _, ok := item.(*menu.Submenu); ok {
-			display += " ▶"
+			display += " >"
 		}
 
 		ebitenutil.DebugPrintAt(screen, prefix+display, 100, y)

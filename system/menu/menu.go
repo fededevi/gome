@@ -1,14 +1,18 @@
 package menu
 
+import (
+	"gome/system/events"
+)
+
 // Menu holds the current menu and selection
 type Menu struct {
-	Current  MenuItem
+	Current  *events.Property[MenuItem]
 	Selected int
 }
 
 // New creates a new Menu
 func New(root MenuItem) *Menu {
-	return &Menu{Current: root}
+	return &Menu{Current: events.NewProperty(root)}
 }
 
 // HandleCommand updates the menu according to input
@@ -17,7 +21,7 @@ func (m *Menu) HandleCommand(cmd Command) {
 		return
 	}
 
-	children := m.Current.Children()
+	children := m.Current.Get().Children()
 	if len(children) == 0 {
 		return
 	}
@@ -36,12 +40,12 @@ func (m *Menu) HandleCommand(cmd Command) {
 	case CmdLeft, CmdRight, CmdSelect:
 		selectedItem.Update(cmd)
 		if len(selectedItem.Children()) > 0 && cmd == CmdSelect {
-			m.Current = selectedItem
+			m.Current.Set(selectedItem)
 			m.Selected = 0
 		}
 	case CmdBack:
-		if m.Current.Parent() != nil {
-			m.Current = m.Current.Parent()
+		if m.Current.Get().Parent() != nil {
+			m.Current.Set(m.Current.Get().Parent())
 			m.Selected = 0
 		}
 	}

@@ -56,9 +56,10 @@ func (m *Menu) HandleCommand(cmd Command) {
 }
 
 // LinkParents recursively sets parent pointers
-func LinkParents(root MenuItem) {
+func LinkParents(root MenuItem) MenuItem {
 	for _, child := range root.Children() {
 		child.SetParent(root)
 		LinkParents(child)
 	}
+	return root
 }

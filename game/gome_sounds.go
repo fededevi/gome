@@ -11,7 +11,7 @@ var (
 )
 
 // InitializeSounds sets up all sounds with proper channels
-func InitializeSounds(as *audio.AudioSystem) {
+func InitializeSounds(as *audio.AudioSystem) *audio.AudioSystem {
 	sounds := CreateSounds(as.Effects, as.Music)
 
 	// Assign to globals for easy access
@@ -19,6 +19,8 @@ func InitializeSounds(as *audio.AudioSystem) {
 	ExplosionSound = sounds[1]
 	BgmSound = sounds[2]
 	AllSounds = sounds
+
+	return as
 }
 
 // CreateSounds creates the list of sounds with channels assigned

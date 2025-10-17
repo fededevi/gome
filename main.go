@@ -19,6 +19,7 @@ type Game struct {
 	audioSys *audio.AudioSystem
 	menu     *menu.Menu
 	fsm      *game.GomeFSM
+	gameMap  *game.Map
 }
 
 func (g *Game) Update() error {
@@ -41,7 +42,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// Draw menu only if OptionsMenu state is active
 	if g.fsm.FSM.Current() == g.fsm.OptionsMenu {
 		render.DrawMenu(screen, g.menu)
+
+		// Apply brightness shader
+
 	}
+
+	if g.fsm.FSM.Current() == g.fsm.GameStart {
+		if g.gameMap != nil {
+			g.gameMap.Draw(screen)
+		}
+
+	}
+
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -49,30 +61,33 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func main() {
+
+	// 1️⃣ Create audio system first
 	audioSys := audio.NewAudioSystem()
 	game.InitializeSounds(audioSys)
 
-	// Create menu
-	menuTree := game.CreateGameMenu(audioSys)
-	menu.LinkParents(menuTree)
-	gameMenu := menu.New(menuTree)
-
-	// Create FSM
+	// 3️⃣ Create FSM
 	fsm := game.NewGomeFSM()
 	fsm.FSM.OnStateChange.Do(func(s *sm.State) {
 		fmt.Println("Entered Options Menu")
 		_ = audioSys.Play(game.ClickSound)
 	})
 
-	fsm.OptionsToGame.OnActivate.Do(func(t *sm.Transition) {
-		fmt.Println("Starting game!")
-	})
-
 	g := &Game{
-		menu:     gameMenu,
+		menu:     menu.New(menu.LinkParents(game.CreateGameMenu(audioSys))),
 		audioSys: audioSys,
 		fsm:      fsm,
+		gameMap:  game.NewMap("game/assets/audio/maps/lush.png"),
 	}
+
+	game.OnStartGame.Do(func(_ any) {
+		//Log
+		fmt.Println("OnStartGame event received in main.go")
+		fsm.FSM.ActivateTransition(fsm.OptionsToGame)
+	})
+
+	mermaidDiagram := sm.ToMermaidLiveURL(sm.GenerateMermaidDiagram(fsm.FSM))
+	fmt.Println("Game State Machine:", mermaidDiagram)
 
 	// Start background music
 	_ = audioSys.Play(game.BgmSound)

@@ -2,21 +2,17 @@ package sm
 
 import (
 	"fmt"
-	"strings"
 
 	"gome/system/events"
 )
 
 // ---------- State ----------
-
-// State represents a node in the FSM
 type State struct {
-	Name    string // optional name for logging/documentation
+	Name    string
 	OnEnter events.Event[*State]
 	OnExit  events.Event[*State]
 }
 
-// NewState creates a new state with the given name
 func NewState(name string) *State {
 	return &State{
 		Name:    name,
@@ -26,17 +22,14 @@ func NewState(name string) *State {
 }
 
 // ---------- Transition ----------
-
-// Transition connects a Source state to a Target state
 type Transition struct {
-	Name       string // optional name for logging/documentation
+	Name       string
 	Source     *State
 	Target     *State
 	OnActivate events.Event[*Transition]
-	Guard      func() bool // optional guard function
+	Guard      func() bool
 }
 
-// NewTransition creates a new transition with optional guard and name
 func NewTransition(source, target *State, guard func() bool, name string) *Transition {
 	t := &Transition{
 		Source:     source,
@@ -47,20 +40,12 @@ func NewTransition(source, target *State, guard func() bool, name string) *Trans
 	if guard != nil {
 		t.Guard = guard
 	} else {
-		t.Guard = func() bool { return true } // default always allowed
+		t.Guard = func() bool { return true }
 	}
 	return t
 }
 
-// Activate triggers the transition
-func (t *Transition) Activate() *State {
-	t.OnActivate.Emit(t)
-	return t.Target
-}
-
 // ---------- State Machine ----------
-
-// StateMachine manages the current state and transitions
 type StateMachine struct {
 	initial       *State
 	current       *events.Property[*State]
@@ -69,9 +54,12 @@ type StateMachine struct {
 	OnStateChange events.Event[*State]
 }
 
-// NewStateMachine creates a new FSM with a default initial state
+func (sm *StateMachine) MermaidLiveLink() any {
+	panic("unimplemented")
+}
+
 func NewStateMachine() *StateMachine {
-	initial := &State{Name: "InitialState"} // basic initial state
+	initial := &State{Name: "InitialState"}
 	return &StateMachine{
 		initial:     initial,
 		current:     events.NewProperty[*State](initial),
@@ -79,22 +67,30 @@ func NewStateMachine() *StateMachine {
 	}
 }
 
-// AddTransition registers a transition
+func (sm *StateMachine) ActivateTransition(t *Transition) *State {
+	if sm.Current() != t.Source {
+		fmt.Printf("Cannot activate transition '%s': current state is '%s', expected '%s'\n",
+			t.Name, sm.Current().Name, t.Source.Name)
+		return sm.Current()
+	}
+	t.OnActivate.Emit(t)
+	sm.OnTransition.Emit(t)
+	sm.SetState(t.Target)
+	return t.Target
+}
+
 func (sm *StateMachine) AddTransition(t *Transition) {
 	sm.transitions = append(sm.transitions, t)
 }
 
-// Current returns the active state
 func (sm *StateMachine) Current() *State {
 	return sm.current.Get()
 }
 
-// Reset sets the FSM back to the initial state
 func (sm *StateMachine) Reset() {
 	sm.SetState(sm.initial)
 }
 
-// SetState forces a state change
 func (sm *StateMachine) SetState(s *State) {
 	if sm.current.Get() != nil {
 		sm.current.Get().OnExit.Emit(sm.current.Get())
@@ -104,7 +100,6 @@ func (sm *StateMachine) SetState(s *State) {
 	sm.OnStateChange.Emit(s)
 }
 
-// TryTransition attempts a valid transition from the current state
 func (sm *StateMachine) TryTransition() bool {
 	current := sm.current.Get()
 	for _, t := range sm.transitions {
@@ -112,10 +107,8 @@ func (sm *StateMachine) TryTransition() bool {
 			if current != nil {
 				current.OnExit.Emit(current)
 			}
-
 			t.OnActivate.Emit(t)
 			sm.OnTransition.Emit(t)
-
 			sm.current.Set(t.Target)
 			t.Target.OnEnter.Emit(t.Target)
 			sm.OnStateChange.Emit(t.Target)
@@ -123,42 +116,4 @@ func (sm *StateMachine) TryTransition() bool {
 		}
 	}
 	return false
-}
-
-// ToMermaid generates a Mermaid flowchart string of the FSM
-func (sm *StateMachine) ToMermaid() string {
-	var sb strings.Builder
-	sb.WriteString("flowchart TD\n")
-
-	// Gather all states from transitions
-	states := make(map[*State]bool)
-	for _, t := range sm.transitions {
-		states[t.Source] = true
-		states[t.Target] = true
-	}
-
-	// Print each transition
-	for _, t := range sm.transitions {
-		srcName := t.Source.Name
-		if srcName == "" {
-			srcName = fmt.Sprintf("%p", t.Source)
-		}
-		tgtName := t.Target.Name
-		if tgtName == "" {
-			tgtName = fmt.Sprintf("%p", t.Target)
-		}
-		label := t.Name
-		sb.WriteString(fmt.Sprintf("    %s -->|%s| %s\n", srcName, label, tgtName))
-	}
-
-	// Mark initial state
-	if sm.initial != nil {
-		initName := sm.initial.Name
-		if initName == "" {
-			initName = fmt.Sprintf("%p", sm.initial)
-		}
-		sb.WriteString(fmt.Sprintf("    %% Initial state: %s\n", initName))
-	}
-
-	return sb.String()
 }

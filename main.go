@@ -61,18 +61,18 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func main() {
-
-	// 1️⃣ Create audio system first
+	// Initialize audio
 	audioSys := audio.NewAudioSystem()
 	game.InitializeSounds(audioSys)
 
-	// 3️⃣ Create FSM
+	// Create FSM
 	fsm := game.NewGomeFSM()
 	fsm.FSM.OnStateChange.Do(func(s *sm.State) {
-		fmt.Println("Entered Options Menu")
+		fmt.Println("Entered state:", s.Name)
 		_ = audioSys.Play(game.ClickSound)
 	})
 
+	// Create menu
 	g := &Game{
 		menu:     menu.New(menu.LinkParents(game.CreateGameMenu(audioSys))),
 		audioSys: audioSys,
@@ -80,14 +80,14 @@ func main() {
 		gameMap:  game.NewMap("game/assets/audio/maps/lush.png"),
 	}
 
+	// Start game event triggers transition
 	game.OnStartGame.Do(func(_ any) {
-		//Log
 		fmt.Println("OnStartGame event received in main.go")
 		fsm.FSM.ActivateTransition(fsm.OptionsToGame)
 	})
 
-	mermaidDiagram := sm.ToMermaidLiveURL(sm.GenerateMermaidDiagram(fsm.FSM))
-	fmt.Println("Game State Machine:", mermaidDiagram)
+	// Print Mermaid link
+	fmt.Println("FSM Mermaid diagram:", sm.ToMermaidLiveURL(sm.GenerateMermaidDiagram(fsm.FSM)))
 
 	// Start background music
 	_ = audioSys.Play(game.BgmSound)

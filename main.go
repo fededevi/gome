@@ -26,34 +26,34 @@ func (g *Game) Update() error {
 	// Update menu input
 	cmd := input.GetMenuCommand()
 	g.menu.HandleCommand(cmd)
+	current := g.fsm.FSM.Current()
 
-	// Automatically transition from Initial -> OptionsMenu
-	if g.fsm.FSM.Current() == g.fsm.Initial {
-		g.fsm.FSM.TryTransition()
+	// Example: automatically move from Initial -> OptionsMenu
+	if current == g.fsm.Initial {
+		g.fsm.FSM.ActivateTransition(g.fsm.InitialToOptions)
 	}
 
 	if game.QuitRequested {
 		return errors.New("quit requested")
 	}
+
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	// Draw menu only if OptionsMenu state is active
-	if g.fsm.FSM.Current() == g.fsm.OptionsMenu {
+	current := g.fsm.FSM.Current()
+
+	// Draw menu in OptionsMenu or Paused states
+	if current == g.fsm.OptionsMenu || current == g.fsm.Paused {
 		render.DrawMenu(screen, g.menu)
-
-		// Apply brightness shader
-
 	}
 
-	if g.fsm.FSM.Current() == g.fsm.GameStart {
+	// Draw gameplay map
+	if current == g.fsm.GameStart || current == g.fsm.Gameplay {
 		if g.gameMap != nil {
 			g.gameMap.Draw(screen)
 		}
-
 	}
-
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {

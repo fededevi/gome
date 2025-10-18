@@ -54,10 +54,6 @@ type StateMachine struct {
 	OnStateChange events.Event[*State]
 }
 
-func (sm *StateMachine) MermaidLiveLink() any {
-	panic("unimplemented")
-}
-
 func NewStateMachine() *StateMachine {
 	initial := &State{Name: "InitialState"}
 	return &StateMachine{

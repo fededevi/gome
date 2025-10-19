@@ -12,4 +12,3 @@ func NewSubmenu(label string, children []MenuItem) *Submenu {
 }
 
 func (s *Submenu) Label() string      { return s.label }
-func (s *Submenu) Update(cmd Command) {}

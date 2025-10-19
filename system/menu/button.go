@@ -15,10 +15,3 @@ func NewButton(label string, action func()) *Button {
 }
 
 func (b *Button) Label() string { return b.label }
-
-// Update executes the action when selected
-func (b *Button) Update(cmd Command) {
-	if cmd == CmdSelect && b.Action != nil {
-		b.Action()
-	}
-}

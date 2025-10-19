@@ -3,7 +3,6 @@ package menu
 // MenuItem is the interface all menu items implement
 type MenuItem interface {
 	Label() string
-	Update(cmd Command)
 	Parent() MenuItem
 	SetParent(MenuItem)
 	Children() []MenuItem

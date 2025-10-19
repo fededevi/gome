@@ -25,23 +25,6 @@ func NewEnumItem(label string, values []string, initial int, onChange func(strin
 // Label returns the label
 func (e *EnumItem) Label() string { return e.label }
 
-// Update handles left/right commands to cycle the enum
-func (e *EnumItem) Update(cmd Command) {
-	oldIndex := e.index
-	switch cmd {
-	case CmdLeft:
-		if e.index > 0 {
-			e.index--
-		}
-	case CmdRight:
-		if e.index < len(e.values)-1 {
-			e.index++
-		}
-	}
-	if e.index != oldIndex && e.OnChange != nil {
-		e.OnChange(e.values[e.index])
-	}
-}
 
 // Value returns the currently selected value
 func (e *EnumItem) Value() string {

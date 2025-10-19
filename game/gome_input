@@ -1,0 +1,70 @@
+package input
+
+import (
+	"gome/system/events"
+
+	"github.com/hajimehoshi/ebiten/v2"
+)
+
+type Command int
+
+const (
+	CmdUp Command = iota
+	CmdDown
+	CmdLeft
+	CmdRight
+	CmdSelect
+	CmdBack
+	CmdMenu
+)
+
+// InputManager emits events for key actions
+type InputManager struct {
+	// events
+	OnKeyDown events.Event[Command]
+	OnKeyUp   events.Event[Command]
+
+	// internal state
+	keyStates map[Command]bool
+}
+
+// Map physical keys to commands
+var keyBindings = map[Command]ebiten.Key{
+	CmdUp:     ebiten.KeyArrowUp,
+	CmdDown:   ebiten.KeyArrowDown,
+	CmdLeft:   ebiten.KeyArrowLeft,
+	CmdRight:  ebiten.KeyArrowRight,
+	CmdSelect: ebiten.KeyEnter,
+	CmdBack:   ebiten.KeyEscape,
+	CmdMenu:   ebiten.KeyM,
+}
+
+// NewInputManager creates a new input manager
+func NewInputManager() *InputManager {
+	return &InputManager{
+		OnKeyDown: events.Event[Command]{},
+		OnKeyUp:   events.Event[Command]{},
+		keyStates: make(map[Command]bool),
+	}
+}
+
+// Update must be called each frame to detect key changes
+func (im *InputManager) Update() {
+	for cmd, key := range keyBindings {
+		pressed := ebiten.IsKeyPressed(key)
+		wasPressed := im.keyStates[cmd]
+
+		if pressed && !wasPressed {
+			im.OnKeyDown.Emit(cmd) // key down event
+		} else if !pressed && wasPressed {
+			im.OnKeyUp.Emit(cmd) // key up event
+		}
+
+		im.keyStates[cmd] = pressed
+	}
+}
+
+// IsDown returns true if the key is currently pressed
+func (im *InputManager) IsDown(cmd Command) bool {
+	return im.keyStates[cmd]
+}
